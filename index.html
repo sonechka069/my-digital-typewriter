@@ -40,12 +40,16 @@
       <hr />
       <section class="receipt-section receipt-section-todos">
         <h3>To do list</h3>
-        <ul class="todos">
-          <li class="todo"><span class="todo-icon todo-personal">personal</span><span class="label">Personal Task 1</span></li>
-          <li class="todo"><span class="todo-icon todo-personal">personal</span><span class="label">Personal Task 2</span></li>
-          <li class="todo"><span class="todo-icon todo-personal">personal</span><span class="label">Personal Task 3</span></li>
-          <li class="todo"><span class="todo-icon todo-work">work</span><span class="label">Work Task 1</span></li>
-          </ul>
+        <ul class="todos" id="todos"></ul>
+        <form class="todo-compose" id="todoForm">
+          <input id="todoInput" type="text" maxlength="80" placeholder="write a tiny task" autocomplete="off" aria-label="New task" />
+          <select id="todoType" aria-label="Task category">
+            <option value="personal">personal</option>
+            <option value="work">work</option>
+          </select>
+          <button id="addTodo" type="submit">+ add</button>
+        </form>
+        <p class="todo-note">saved only in this browser</p>
       </section>
     </article>
   </main>

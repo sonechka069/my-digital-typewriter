@@ -11,7 +11,7 @@ const today = new Date();
 receiptDate.textContent = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
 
 // --- Typewriter heading ---
-const HEADING_PREFIX = "Nasha's Daily ";
+const HEADING_PREFIX = headingText.replace('Summary', '');
 const ROTATING_WORDS = ['Hell :,(', 'Tasks', 'Summary'];
 const TYPE_DELAY = 90;
 const DELETE_DELAY = 60;
@@ -82,6 +82,107 @@ const idleInterval = setInterval(() => {
   printerText.textContent = IDLE_FRAMES[idleFrame];
 }, 600);
 
+// --- Local to-do list ---
+// Tasks are intentionally stored only in this browser. No account or paid service is used.
+const TODOS_STORAGE_KEY = 'sonechka-digital-typewriter-todos-v1';
+const todosList = document.getElementById('todos');
+const todoForm = document.getElementById('todoForm');
+const todoInput = document.getElementById('todoInput');
+const todoType = document.getElementById('todoType');
+
+function loadTodos() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(TODOS_STORAGE_KEY));
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
+let todos = loadTodos();
+
+function saveTodos() {
+  localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(todos));
+}
+
+function renderTodos() {
+  todosList.innerHTML = '';
+
+  if (todos.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'empty-todos';
+    empty.textContent = 'Nothing to do YAYYY';
+    todosList.appendChild(empty);
+    return;
+  }
+
+  todos.forEach((task) => {
+    const todo = document.createElement('li');
+    todo.className = `todo${task.done ? ' done' : ''}`;
+    todo.dataset.id = task.id;
+
+    const icon = document.createElement('span');
+    icon.className = `todo-icon todo-${task.type}`;
+    icon.textContent = task.type;
+
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = task.text;
+
+    const remove = document.createElement('button');
+    remove.className = 'todo-delete';
+    remove.type = 'button';
+    remove.title = 'Delete task';
+    remove.setAttribute('aria-label', 'Delete task');
+    remove.textContent = 'x';
+
+    todo.append(icon, label, remove);
+    todosList.appendChild(todo);
+  });
+}
+
+todoForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const text = todoInput.value.trim();
+  if (!text) {
+    todoInput.focus();
+    return;
+  }
+
+  todos.push({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    text,
+    type: todoType.value === 'work' ? 'work' : 'personal',
+    done: false,
+  });
+  saveTodos();
+  renderTodos();
+  todoForm.reset();
+  todoInput.focus();
+});
+
+todosList.addEventListener('click', (event) => {
+  const row = event.target.closest('.todo');
+  if (!row) return;
+  const id = row.dataset.id;
+
+  if (event.target.closest('.todo-delete')) {
+    todos = todos.filter((task) => task.id !== id);
+    saveTodos();
+    renderTodos();
+    return;
+  }
+
+  const task = todos.find((item) => item.id === id);
+  if (!task) return;
+  task.done = !task.done;
+  saveTodos();
+  renderTodos();
+  if (task.done) spawnSparkles(event.clientX, event.clientY);
+});
+
+renderTodos();
+
 // --- Todo sparkle effect lolll ---
 const SPARKLE_GLYPHS = ['✦', '✧', '⋆', '✩', '✶'];
 const SPARKLE_COLORS = ['#EC6E9E', '#9E6EDA', '#C76EAB', '#FFD978'];
@@ -107,14 +208,6 @@ function spawnSparkles(x, y) {
   }
 }
 
-document.querySelectorAll('.todos .todo').forEach((todo) => {
-  todo.addEventListener('click', (e) => {
-    const willBeDone = !todo.classList.contains('done');
-    todo.classList.toggle('done');
-    if (willBeDone) spawnSparkles(e.clientX, e.clientY);
-  });
-});
-
 // --- Receipt wiggle ---
 function wiggleReceipt() {
   receipt.classList.remove('is-wiggle');
@@ -123,7 +216,7 @@ function wiggleReceipt() {
 }
 
 receipt.addEventListener('click', (e) => {
-  if (e.target.closest('.todo')) return;
+  if (e.target.closest('.todo, .todo-compose')) return;
   wiggleReceipt();
 });
 
